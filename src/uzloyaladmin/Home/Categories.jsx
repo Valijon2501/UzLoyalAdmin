@@ -1,4 +1,3 @@
-// import { useNavigate } from "react-router-dom";
 import { HomePageStyle } from "./HomePageStyle";
 import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
@@ -8,39 +7,35 @@ import { FaEdit } from "react-icons/fa";
 
 const Categories = () => {
   // ======================category get
-  const [categ, setCateg] = useState();
-  function getCategory() {
+  const [categ, setCateg] = useState([]);
+  const [openModal, setOpenModal] = useState(false);
+  const [editOpenModal, setEditOpenModal] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [idClick, setIdClick] = useState();
+
+  const tokenxon = localStorage.getItem("tokenchik");
+
+  const getCategory = () => {
     fetch("https://api.dezinfeksiyatashkent.uz/api/categories")
       .then((res) => res.json())
-      .then((element) => setCateg(element?.data));
-  }
+      .then((element) => setCateg(element?.data || []));
+  };
 
   useEffect(() => {
     getCategory();
   }, []);
 
-  //==================== modal function
-  const [openModal, setOpenModal] = useState(false);
-  const [editOpenModal, setEditOpenModal] = useState(false);
-
-  //=================== category post
-  const [nameEn, setNameEn] = useState();
-  const [nameRu, setNameRu] = useState();
-  const [image, setImage] = useState();
-
-  const tokenxon = localStorage.getItem("tokenchik");
-
-  const formdata = new FormData();
-  formdata.append("name_en", nameEn);
-  formdata.append("name_ru", nameRu);
-  formdata.append("images", image);
   const categoryPost = (event) => {
     event.preventDefault();
+    const formdata = new FormData();
+    formdata.append("name", name);
+    formdata.append("description", description);
+
     fetch("https://api.dezinfeksiyatashkent.uz/api/categories", {
       method: "POST",
       headers: {
-        // "Content-type": "multipart/form-data",
-        " Authorization": `Bearer ${tokenxon}`,
+        Authorization: `Bearer ${tokenxon}`,
       },
       body: formdata,
     })
@@ -56,10 +51,8 @@ const Categories = () => {
       });
   };
 
-  //============================= delete api
-
-  const deleteApi = (id) => {
-    fetch(`https://api.dezinfeksiyatashkent.uz/api/categories/1/${id}`, {
+  const deleteApi = (parent_id) => {
+    fetch(`https://api.dezinfeksiyatashkent.uz/api/categories/${parent_id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${tokenxon}`,
@@ -76,21 +69,13 @@ const Categories = () => {
       });
   };
 
-  //=================== put api
-  const modalOpenFunction = (id) => {
-    setEditOpenModal(!editOpenModal);
-    setOpenModal(false);
-    setIdClick(id);
-  };
-  const modalOpenFunctionAdd = () => {
-    setEditOpenModal(false);
-    setOpenModal(!openModal);
-  };
-  const [idClick, setIdClick] = useState();
-  // ////////////////////////////////
   const editFunction = (e) => {
     e.preventDefault();
-    fetch(`https://api.dezinfeksiyatashkent.uz/api/categories/1/${idClick}`, {
+    const formdata = new FormData();
+    formdata.append("name", name);
+    formdata.append("description", description);
+
+    fetch(`https://api.dezinfeksiyatashkent.uz/api/categories/${idClick}`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${tokenxon}`,
@@ -109,6 +94,25 @@ const Categories = () => {
         }
       });
   };
+
+  const modalOpenFunction = (parent_id) => {
+    setEditOpenModal(!editOpenModal);
+    setOpenModal(false);
+    setIdClick(parent_id);
+    const selectedCategory = categ.find((cat) => cat.id === parent_id);
+    if (selectedCategory) {
+      setName(selectedCategory.name);
+      setDescription(selectedCategory.description);
+    }
+  };
+
+  const modalOpenFunctionAdd = () => {
+    setEditOpenModal(false);
+    setOpenModal(!openModal);
+    setName("");
+    setDescription("");
+  };
+
   return (
     <>
       <HomePageStyle>
@@ -120,21 +124,15 @@ const Categories = () => {
             <h1>modal</h1>
             <form>
               <input
-                onChange={(e) => setNameEn(e?.target?.value)}
+                onChange={(e) => setName(e?.target?.value)}
                 type="text"
-                placeholder="name en"
+                placeholder="name"
                 required
               />
               <input
-                onChange={(e) => setNameRu(e?.target?.value)}
+                onChange={(e) => setDescription(e?.target?.value)}
                 type="text"
-                placeholder="name ru"
-                required
-              />
-              <input
-                // multiple
-                onChange={(e) => setImage(e?.target?.files[0])}
-                type="file"
+                placeholder="Description"
                 required
               />
               <button onClick={categoryPost}>qo'shilsin add</button>
@@ -146,74 +144,68 @@ const Categories = () => {
             <h1>edit modal</h1>
             <form>
               <input
-                onChange={(e) => setNameEn(e?.target?.value)}
+                onChange={(e) => setName(e?.target?.value)}
                 type="text"
-                placeholder="name en"
+                placeholder="Name"
                 required
               />
               <input
-                onChange={(e) => setNameRu(e?.target?.value)}
+                onChange={(e) => setDescription(e?.target?.value)}
                 type="text"
-                placeholder="name ru"
-                required
-              />
-              <input
-                // multiple
-                onChange={(e) => setImage(e?.target?.files[0])}
-                type="file"
+                placeholder="Description"
                 required
               />
               <button onClick={editFunction}>edit add</button>
             </form>
           </div>
         )}
-
         <table id="customers" className="customers">
-          <tr>
-            <th>name_en</th>
-            <th>name_ru</th>
-            <th>Image</th>
-            <th>
-              <div>
-                <p>Action</p>
-              </div>
-            </th>
-          </tr>
-          {categ?.map((item, index) => (
-            <tr key={index}>
-              <td>{item?.name_en}</td>
-              <td>{item?.name_ru}</td>
-              <td>
-                <img
-                  src={`https://autoapi.dezinfeksiyatashkent.uz/api/uploads/images/${item?.image_src}`}
-                  alt={"item?.name_en"}
-                />
-              </td>
-              <td>
-                <span>
-                  <button
-                    className="btn"
-                    onClick={(e) => modalOpenFunction(item?.id)}
-                  >
-                    <FaEdit className="FaEdit" />
-                  </button>
-                </span>
-                <span>
-                  <button
-                    className="btn_to"
-                    onClick={() => deleteApi(item?.id)}
-                  >
-                    <MdDeleteForever className="MdDeleteForever" />
-                  </button>
-                </span>
-              </td>
-              {/* <td></td> */}
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>id</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>
+                <div>
+                  <p>Harakat</p>
+                </div>
+              </th>
             </tr>
-          ))}
+          </thead>
+          <tbody>
+            {categ.map((item, index) => (
+              <tr key={index}>
+                <td>{index + 1}</td>
+                <td>{item?.id}</td>
+                <td>{item?.name}</td>
+                <td>{item?.description}</td>
+                <td>
+                  <span>
+                    <button
+                      className="btn"
+                      onClick={() => modalOpenFunction(item?.id)}
+                    >
+                      <FaEdit className="FaEdit" />
+                    </button>
+                  </span>
+                  <span>
+                    <button
+                      className="btn_to"
+                      onClick={() => deleteApi(item?.id)}
+                    >
+                      <MdDeleteForever className="MdDeleteForever" />
+                    </button>
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
         <ToastContainer />
       </HomePageStyle>
     </>
   );
 };
+
 export default Categories;

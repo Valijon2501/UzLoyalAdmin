@@ -60,6 +60,7 @@ const LaginPage = () => {
             placeholder="Phone Number"
             required
             minLength={3}
+            value={raqam}
           />
           <PiLockKeyLight className="PiLockKeyLight" />
           <input
@@ -69,6 +70,7 @@ const LaginPage = () => {
             placeholder="password"
             required
             minLength={3}
+            value={parol}
           />
           <button className="submir_btn" type="submit">
             Submit
