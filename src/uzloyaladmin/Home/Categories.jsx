@@ -4,16 +4,15 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { MdDeleteForever } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
+import { Modal, Button, Input, Form } from "antd";
 
 const Categories = () => {
-  // ======================category get
   const [categ, setCateg] = useState([]);
   const [openModal, setOpenModal] = useState(false);
   const [editOpenModal, setEditOpenModal] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [idClick, setIdClick] = useState();
-
+  const [form] = Form.useForm();
+  const [idClick, setIdClick] = useState(null);
+  const [loading, setLoading] = useState(false);
   const tokenxon = localStorage.getItem("tokenchik");
 
   const getCategory = () => {
@@ -26,11 +25,12 @@ const Categories = () => {
     getCategory();
   }, []);
 
-  const categoryPost = (event) => {
-    event.preventDefault();
+  const categoryPost = (values) => {
     const formdata = new FormData();
-    formdata.append("name", name);
-    formdata.append("description", description);
+    formdata.append("name", values.name);
+    formdata.append("description", values.description);
+    
+    setLoading(true); // Loadingni yoqamiz
 
     fetch("https://api.dezinfeksiyatashkent.uz/api/categories", {
       method: "POST",
@@ -41,6 +41,7 @@ const Categories = () => {
     })
       .then((response) => response.json())
       .then((elem) => {
+        setLoading(false); // Loadingni o'chiramiz
         if (elem?.success) {
           getCategory();
           toast.success(elem?.message);
@@ -69,11 +70,12 @@ const Categories = () => {
       });
   };
 
-  const editFunction = (e) => {
-    e.preventDefault();
+  const editFunction = (values) => {
     const formdata = new FormData();
-    formdata.append("name", name);
-    formdata.append("description", description);
+    formdata.append("name", values.name);
+    formdata.append("description", values.description);
+
+    setLoading(true); // Loadingni yoqamiz
 
     fetch(`https://api.dezinfeksiyatashkent.uz/api/categories/${idClick}`, {
       method: "PUT",
@@ -84,81 +86,54 @@ const Categories = () => {
     })
       .then((responses) => responses.json())
       .then((item) => {
+        setLoading(false); // Loadingni o'chiramiz
         if (item?.success) {
           getCategory();
           toast.success(item?.message);
           setEditOpenModal(false);
-          setIdClick();
+          setIdClick(null);
         } else {
           toast.error(item?.message);
         }
       });
   };
 
-  const modalOpenFunction = (parent_id) => {
-    setEditOpenModal(!editOpenModal);
-    setOpenModal(false);
-    setIdClick(parent_id);
-    const selectedCategory = categ.find((cat) => cat.id === parent_id);
-    if (selectedCategory) {
-      setName(selectedCategory.name);
-      setDescription(selectedCategory.description);
+  const openModalFunction = (parent_id) => {
+    if (parent_id) {
+      setEditOpenModal(true);
+      const selectedCategory = categ.find((cat) => cat.id === parent_id);
+      if (selectedCategory) {
+        form.setFieldsValue({
+          name: selectedCategory.name,
+          description: selectedCategory.description,
+        });
+      }
+    } else {
+      setOpenModal(true);
+      form.resetFields();
+      setEditOpenModal(false);
     }
+    setIdClick(parent_id);
   };
 
-  const modalOpenFunctionAdd = () => {
-    setEditOpenModal(false);
-    setOpenModal(!openModal);
-    setName("");
-    setDescription("");
+  const handleSubmit = (values) => {
+    if (editOpenModal) {
+      editFunction(values);
+    } else {
+      categoryPost(values);
+    }
   };
 
   return (
     <>
       <HomePageStyle>
-        <button onClick={modalOpenFunctionAdd}>
-          {openModal ? "yopish" : " Qo'shish"}
-        </button>
-        {openModal && (
-          <div className="modal">
-            <h1>modal</h1>
-            <form>
-              <input
-                onChange={(e) => setName(e?.target?.value)}
-                type="text"
-                placeholder="name"
-                required
-              />
-              <input
-                onChange={(e) => setDescription(e?.target?.value)}
-                type="text"
-                placeholder="Description"
-                required
-              />
-              <button onClick={categoryPost}>qo'shilsin add</button>
-            </form>
-          </div>
-        )}
-        {editOpenModal && (
-          <div className="modal">
-            <h1>edit modal</h1>
-            <form>
-              <input
-                onChange={(e) => setName(e?.target?.value)}
-                type="text"
-                placeholder="Name"
-                required
-              />
-              <input
-                onChange={(e) => setDescription(e?.target?.value)}
-                type="text"
-                placeholder="Description"
-                required
-              />
-              <button onClick={editFunction}>edit add</button>
-            </form>
-          </div>
-        )}
+        <Button
+          type="primary"
+          onClick={() => openModalFunction()}
+          style={{ marginBottom: "10px" }}
+        >
+          Add Category
+        </Button>
         <table id="customers" className="customers">
           <thead>
             <tr>
@@ -175,7 +150,7 @@ const Categories = () => {
           </thead>
           <tbody>
             {categ.map((item, index) => (
-              <tr key={index}>
+              <tr key={item?.id}>
                 <td>{index + 1}</td>
                 <td>{item?.id}</td>
                 <td>{item?.name}</td>
@@ -184,7 +159,7 @@ const Categories = () => {
                   <span>
                     <button
                       className="btn"
-                      onClick={() => modalOpenFunction(item?.id)}
+                      onClick={() => openModalFunction(item?.id)}
                     >
                       <FaEdit className="FaEdit" />
                     </button>
@@ -202,6 +177,50 @@ const Categories = () => {
             ))}
           </tbody>
         </table>
+
+        <Modal
+          title={editOpenModal ? "Edit Category" : "Add Category"}
+          open={openModal || editOpenModal}
+          footer={null}
+          onCancel={() => {
+            setOpenModal(false);
+            setEditOpenModal(false);
+          }}
+        >
+          <Form
+            form={form}
+            labelCol={{ span: 6 }}
+            wrapperCol={{ span: 18 }}
+            onFinish={handleSubmit}
+          >
+            <Form.Item
+              label="Name"
+              name="name"
+              rules={[{ required: true, message: "Please input the name!" }]}
+            >
+              <Input placeholder="Name" />
+            </Form.Item>
+            <Form.Item
+              label="Description"
+              name="description"
+              rules={[
+                { required: true, message: "Please input the description!" },
+              ]}
+            >
+              <Input placeholder="Description" />
+            </Form.Item>
+            <Form.Item wrapperCol={{ offset: 6, span: 18 }}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                disabled={loading}
+              >
+                Submit
+              </Button>
+            </Form.Item>
+          </Form>
+        </Modal>
         <ToastContainer />
       </HomePageStyle>
     </>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { HomePageStyle } from "../Home/HomePageStyle";
@@ -10,6 +10,7 @@ const LaginPage = () => {
   const [raqam, setRaqam] = useState();
   const [parol, setParol] = useState();
   const navigate = useNavigate();
+  const location = useLocation();
   const token = localStorage.getItem("tokenchik");
 
   useEffect(() => {

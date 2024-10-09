@@ -1,129 +1,165 @@
-import React, { useState } from "react";
 import {
-  AppstoreOutlined,
-  ContainerOutlined,
-  DesktopOutlined,
-  MailOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  PieChartOutlined,
+  SettingOutlined,
+  UploadOutlined,
+  UserOutlined,
+  VideoCameraOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
-import { Button, Menu } from "antd";
-const items = [
-  {
-    key: "1",
-    icon: <PieChartOutlined />,
-    label: "Categories",
-  },
-  {
-    key: "2",
-    icon: <DesktopOutlined />,
-    label: "Faqs",
-  },
-  {
-    key: "3",
-    icon: <ContainerOutlined />,
-    label: "News",
-  },
-  {
-    key: "4",
-    icon: <ContainerOutlined />,
-    label: "Blogs",
-  },
-  {
-    key: "5",
-    icon: <ContainerOutlined />,
-    label: "Services",
-  },
-  {
-    key: "6",
-    icon: <ContainerOutlined />,
-    label: "Sources",
-  },
-//   {
-//     key: "sub1",
-//     label: "Navigation One",
-//     icon: <MailOutlined />,
-//     children: [
-//       {
-//         key: "5",
-//         label: "Option 5",
-//       },
-//       {
-//         key: "6",
-//         label: "Option 6",
-//       },
-//       {
-//         key: "7",
-//         label: "Option 7",
-//       },
-//       {
-//         key: "8",
-//         label: "Option 8",
-//       },
-//     ],
-//   },
-//   {
-//     key: "sub2",
-//     label: "Navigation Two",
-//     icon: <AppstoreOutlined />,
-//     children: [
-//       {
-//         key: "9",
-//         label: "Option 9",
-//       },
-//       {
-//         key: "10",
-//         label: "Option 10",
-//       },
-//       {
-//         key: "sub3",
-//         label: "Submenu",
-//         children: [
-//           {
-//             key: "11",
-//             label: "Option 11",
-//           },
-//           {
-//             key: "12",
-//             label: "Option 12",
-//           },
-//         ],
-//       },
-//     ],
-//   },
-];
+import { Button, Layout, Menu, Modal, theme } from "antd";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { TbCategory } from "react-icons/tb";
+import { MdPeopleAlt } from "react-icons/md";
+import { FaNewspaper } from "react-icons/fa6";
+import { FaBlogger } from "react-icons/fa";
+import { MdMiscellaneousServices } from "react-icons/md";
+import { GrResources } from "react-icons/gr";
+
+const { Header, Sider, Content } = Layout;
+
 const About = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const toggleCollapsed = () => {
-    setCollapsed(!collapsed);
-  };
-  return (
-    <div
-      style={{
-        width: 256,
-        height: 690,
-      }}
-    >
-      <Button
-        type="primary"
-        onClick={toggleCollapsed}
-        style={{
-          marginBottom: 16,
-        }}
-      >
-        {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-      </Button>
-      <Menu
-        defaultSelectedKeys={["1"]}
-        defaultOpenKeys={["sub1"]}
-        mode="inline"
-        theme="dark"
-        inlineCollapsed={collapsed}
-        items={items}
-      />
-    </div>
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [selectedKey, setSelectedKey] = useState("1");
 
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.includes("/Categories")) setSelectedKey("1");
+    else if (path.includes("/faqs")) setSelectedKey("2");
+    else if (path.includes("/news")) setSelectedKey("3");
+    else if (path.includes("/blogs")) setSelectedKey("4");
+    else if (path.includes("/services")) setSelectedKey("5");
+    else if (path.includes("/sources")) setSelectedKey("6");
+  }, [location]);
+
+  const {
+    token: { colorBgContainer, borderRadiusLG },
+  } = theme.useToken();
+
+  const menuItems = [
+    {
+      key: "1",
+      icon: <TbCategory />,
+      label: <NavLink to="/Categories">Category</NavLink>,
+    },
+    {
+      key: "2",
+      icon: <MdPeopleAlt />,
+      label: <NavLink to="/faqs">Faqs</NavLink>,
+    },
+    {
+      key: "3",
+      icon: <FaNewspaper />,
+      label: <NavLink to="/news">News</NavLink>,
+    },
+    {
+      key: "4",
+      icon: <FaBlogger />,
+      label: <NavLink to="/blogs">Blogs</NavLink>,
+    },
+    {
+      key: "5",
+      icon: <MdMiscellaneousServices />,
+      label: <NavLink to="/services">Services</NavLink>,
+    },
+
+    {
+      key: "6",
+      icon: <GrResources />,
+      label: <NavLink to="/sources">Sources</NavLink>,
+    },
+  ];
+
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleOk = () => {
+    setIsModalVisible(false);
+    localStorage.removeItem("tokenchik");
+    navigate("/login");
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  return (
+    <div style={{ maxWidth: "100%", margin: "0 auto", height: "100vh" }}>
+      <Layout style={{ minHeight: "100vh" }}>
+        <Sider trigger={null} collapsible collapsed={collapsed}>
+          <div className="demo-logo-vertical" />
+          <Menu
+            theme="dark"
+            mode="inline"
+            selectedKeys={[selectedKey]}
+            items={menuItems}
+            onClick={(e) => setSelectedKey(e.key)}
+          />
+        </Sider>
+        <Layout>
+          <Header
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "0 16px",
+              background: colorBgContainer,
+            }}
+          >
+            <Button
+              type="text"
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsed(!collapsed)}
+              style={{
+                fontSize: "16px",
+                width: 64,
+                height: 64,
+              }}
+            />
+            <Button
+              type="primary"
+              icon={<LogoutOutlined />}
+              onClick={showModal}
+              style={{
+                marginRight: "10px",
+                backgroundColor: "#001f3a",
+              }}
+            >
+              Log Out
+            </Button>
+          </Header>
+          <Content
+            style={{
+              margin: "24px 16px",
+              padding: 24,
+              minHeight: 280,
+              background: colorBgContainer,
+              borderRadius: borderRadiusLG,
+            }}
+          >
+            <Outlet />
+          </Content>
+        </Layout>
+      </Layout>
+
+      <Modal
+        className="logout"
+        title="Confirm Logout"
+        visible={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        okText="Yes"
+        cancelText="No"
+      >
+        <p>Are you sure you want to log out?</p>
+      </Modal>
+    </div>
   );
 };
+
 export default About;
